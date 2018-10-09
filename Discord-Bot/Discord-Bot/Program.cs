@@ -3,7 +3,6 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -51,9 +50,10 @@ namespace Discord_Bot
             }
             else
             {
-                var user = new User(socketGuildUser);
+                var newUser = new User(socketGuildUser);
+                _registrationServive.Users.Add(newUser);
 
-                await StartRegistration(user);
+                await StartRegistration(newUser);
             }
         }
 
@@ -73,11 +73,27 @@ namespace Discord_Bot
                 return;
             }
 
+            if (message.Author.IsBot)
+            {
+                return;
+            }
+
             // Check if direct channel
             if (message.Channel is SocketDMChannel)
             {
+                var user = _registrationServive.Users.FirstOrDefault(u => u.SocketGuildUser.Username == message.Author.Username && !u.IsRegistrationComplete);
 
-                await message.Author.SendMessageAsync("Hi there");
+                if (user != null)
+                {
+                    // todo process response
+                    Console.WriteLine(message.Content);
+
+                    //if valid continue else ask again
+
+                    user.RegistrationStep++;
+
+                    await user.SocketGuildUser.SendMessageAsync(Messages.RegistrationForm[(int)user.RegistrationStep]);
+                }
             }
             else
             {
@@ -104,53 +120,6 @@ namespace Discord_Bot
                 }
             }
         }
-    }
-
-    internal class RegistrationService
-    {
-        public enum RegistrationStep
-        {
-            NotStarted,
-            Name,
-            Surname,
-            Sex,
-            Done
-        }
-
-        public RegistrationService()
-        {
-            Users = new List<User>();
-            //todo load users from json
-        }
-
-        public List<User> Users { get; set; }
-    }
-
-    internal class User
-    {
-        private RegistrationService.RegistrationStep _registrationStep;
-
-        public User(SocketGuildUser socketGuildUser)
-        {
-            SocketGuildUser = socketGuildUser;
-            _registrationStep = RegistrationService.RegistrationStep.NotStarted;
-        }
-
-        public SocketGuildUser SocketGuildUser { get; set; }
-        public bool IsRegistrationComplete { get; set; }
-    }
-
-    internal class Messages
-    {
-
-        public static string WelcomeMessage = "Hallo!\n" +
-                                              "Ich bin der UltimateLinz-Bot und werde dich durch die Anmeldung führen.\n" +
-                                              "Bitte beantworte die folgenden Fragen wahrheitsgemäß.\n" +
-                                              "Ein Admin wird sich deine Anmeldung dann ansehen und dich freischalten.";
-
-        public static string AskName = "Wie lautet dein Vorname?";
-        public static string AskSurName = "Wie lautet dein Nachname?";
-        public static string AskSex = "Was is dein Geschlecht?";
     }
 
     public class Info : ModuleBase
@@ -212,6 +181,4 @@ namespace Discord_Bot
             await ReplyAsync($"{userInfo.Username}#{userInfo.Discriminator}");
         }
     }
-
-
 }

@@ -17,8 +17,6 @@ namespace Discord_Bot
         private IServiceProvider _services;
         private RegistrationService _registrationServive;
 
-        private const string Token = "NDk4ODU5NTIzNDYxNjExNTIy.Dp4sdA.3zdONPf19HE3_vvsD3bZAaSr38k";
-
         static void Main() => new Program().Start().GetAwaiter().GetResult();
 
         public async Task Start()
@@ -30,7 +28,7 @@ namespace Discord_Bot
 
             await InstallCommands();
 
-            await _client.LoginAsync(TokenType.Bot, Token);
+            await _client.LoginAsync(TokenType.Bot, Token.token);
             await _client.StartAsync();
 
             await Task.Delay(-1);
